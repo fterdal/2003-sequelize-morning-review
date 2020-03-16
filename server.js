@@ -11,6 +11,18 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(morgan("dev"));
 
+app.use(async (req, res, next) => {
+  try {
+    const allPlants = await Plant.findAll();
+    throw new Error("Oh No! The plants are on fire!")
+    // req.plants = allPlants;
+    // res.send("Your plants are ready"); // Cannot set headers after they are sent
+    // next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.get("/", (req, res, next) => {
   res.send(`
     <a href="/plants">Plants</a>
@@ -20,11 +32,11 @@ app.get("/", (req, res, next) => {
 
 // List all plants in the database
 app.get("/plants", async (req, res, next) => {
-  const plants = await Plant.findAll();
+  // const plants = await Plant.findAll();
   res.send(`
     <a href="/">Home</a>
     <ul>
-      ${plants
+      ${req.plants
         .map(plant => {
           return `<li>Plant: ${plant.name}</li>`;
         })
@@ -38,9 +50,7 @@ app.get("/box/:id", async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const box = await Box.findByPk(id, {
-      include: [
-        { model: Plant }
-      ]
+      include: [{ model: Plant }]
     });
     res.send(`
       <h1>${box.color} Box</h1>
